@@ -3,8 +3,8 @@
   Supabase is optional during design. Without credentials, the guestbook runs
   in local preview mode only; those wishes are NOT shared with other visitors.
 */
-const SUPABASE_URL = ""; // Add your Supabase Project URL
-const SUPABASE_ANON_KEY = ""; // Add your Supabase publishable/anon key (never a service-role key)
+const SUPABASE_URL = "https://mgosavprtrwwcbgaenul.supabase.co"; // Add your Supabase Project URL
+const SUPABASE_ANON_KEY = "sb_publishable_T3VuGPrsqfbJ6rNdjtAp5A_H6cjQHzJ"; // Add your Supabase publishable/anon key (never a service-role key)
 const birthdayDate = new Date("2026-11-22T00:00:00");
 
 const $ = (selector) => document.querySelector(selector);
