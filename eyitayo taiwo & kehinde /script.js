@@ -99,7 +99,8 @@ async function loadApprovedWishes() {
   $("#wishesList").innerHTML = "";
   data.forEach(wish => renderWish(wish));
   $("#wishCount").textContent = `${data.length} APPROVED WISH${data.length === 1 ? "" : "ES"}`;
-  $("#wallDisclaimer").textContent = "Only approved wishes appear here. Thank you for helping keep this a kind and welcoming space.";
+  $("#wallDisclaimer").textContent =
+  "Birthday wishes appear automatically after submission. Thank you for being part of this story!";
 }
 
 $("#wishForm").addEventListener("submit", async event => {
@@ -130,8 +131,8 @@ $("#wishForm").addEventListener("submit", async event => {
         approved: false
       }]);
       if (error) throw error;
-      setStatus("Thank you! Your wish has been received and is waiting for approval.");
-      showToast("Your birthday wish was submitted for review.");
+      setStatus("Thank you! Your birthday wish is now published.");
+showToast("Your birthday wish has been published!");
     } else {
       const localWishes = JSON.parse(localStorage.getItem("lifeInFramesPreviewWishes") || "[]");
       localWishes.unshift({ ...wish, submittedAt: new Date().toISOString() });
