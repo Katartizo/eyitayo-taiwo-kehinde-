@@ -11,7 +11,7 @@ const SUPABASE_ANON_KEY =
   "sb_publishable_T3VuGPrsqfbJ6rNdjtAp5A_H6cjQHzJ";
 
 const birthdayDate = new Date("2026-11-22T00:00:00");
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 30;
 
 const $ = (selector) => document.querySelector(selector);
 
