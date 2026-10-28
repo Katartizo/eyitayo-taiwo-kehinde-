@@ -1,34 +1,48 @@
 
 /*
-  A Life in Frames — birthday guestbook
-  Automatic publishing, public wish wall, pagination and realtime updates.
+  A Life in Frames — Birthday Guestbook
+  Automatic publishing, public wishes, pagination and realtime updates.
 */
 
-const SUPABASE_URL = "https://mgosavprtrwwcbgaenul.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_T3VuGPrsqfbJ6rNdjtAp5A_H6cjQHzJ";
+const SUPABASE_URL =
+  "https://mgosavprtrwwcbgaenul.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "sb_publishable_T3VuGPrsqfbJ6rNdjtAp5A_H6cjQHzJ";
 
 const birthdayDate = new Date("2026-11-22T00:00:00");
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 30;
 
 const $ = (selector) => document.querySelector(selector);
 
 const supabaseReady = Boolean(
   SUPABASE_URL &&
   SUPABASE_ANON_KEY &&
-  window.supabase
+  window.supabase &&
+  typeof window.supabase.createClient === "function"
 );
 
 const db = supabaseReady
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    )
   : null;
 
-$("#year").textContent = new Date().getFullYear();
+if ($("#year")) {
+  $("#year").textContent = new Date().getFullYear();
+}
 
-let loadedCount = 0;
+// --------------------------------------------------
+// STATE
+// --------------------------------------------------
+
 let totalWishes = 0;
+let wishesOffset = 0;
 let loadingWishes = false;
 let moreWishesAvailable = false;
 let realtimeChannel = null;
+let loadMoreButton = null;
 
 // --------------------------------------------------
 // COUNTDOWN
@@ -39,31 +53,50 @@ function updateCountdown() {
   const diff = birthdayDate.getTime() - now.getTime();
 
   if (diff <= 0) {
-    $(".countdown-card").innerHTML =
-      "<div><span class='countdown-label'>TODAY IS THE DAY</span>" +
-      "<strong>Happy Birthday, Eita!</strong></div>";
+    const card = $(".countdown-card");
+
+    if (card) {
+      card.innerHTML =
+        "<div><span class='countdown-label'>" +
+        "TODAY IS THE DAY</span>" +
+        "<strong>Happy Birthday, Eita!</strong></div>";
+    }
+
     return;
   }
 
-  $("#days").textContent = String(
-    Math.floor(diff / 86400000)
-  ).padStart(2, "0");
+  const days = $("#days");
+  const hours = $("#hours");
+  const minutes = $("#minutes");
+  const seconds = $("#seconds");
 
-  $("#hours").textContent = String(
-    Math.floor((diff % 86400000) / 3600000)
-  ).padStart(2, "0");
+  if (days) {
+    days.textContent = String(
+      Math.floor(diff / 86400000)
+    ).padStart(2, "0");
+  }
 
-  $("#minutes").textContent = String(
-    Math.floor((diff % 3600000) / 60000)
-  ).padStart(2, "0");
+  if (hours) {
+    hours.textContent = String(
+      Math.floor((diff % 86400000) / 3600000)
+    ).padStart(2, "0");
+  }
 
-  $("#seconds").textContent = String(
-    Math.floor((diff % 60000) / 1000)
-  ).padStart(2, "0");
+  if (minutes) {
+    minutes.textContent = String(
+      Math.floor((diff % 3600000) / 60000)
+    ).padStart(2, "0");
+  }
+
+  if (seconds) {
+    seconds.textContent = String(
+      Math.floor((diff % 60000) / 1000)
+    ).padStart(2, "0");
+  }
 }
 
 updateCountdown();
-setInterval(updateCountdown, 1000);
+window.setInterval(updateCountdown, 1000);
 
 // --------------------------------------------------
 // MOBILE NAVIGATION
@@ -72,24 +105,27 @@ setInterval(updateCountdown, 1000);
 const menuToggle = $("#menuToggle");
 const navLinks = $("#navLinks");
 
-menuToggle.addEventListener("click", () => {
-  const open = navLinks.classList.toggle("open");
+if (menuToggle && navLinks) {
+  menuToggle.addEventListener("click", () => {
+    const open = navLinks.classList.toggle("open");
 
-  menuToggle.setAttribute("aria-expanded", String(open));
-  menuToggle.setAttribute(
-    "aria-label",
-    open ? "Close navigation" : "Open navigation"
-  );
-  menuToggle.textContent = open ? "✕" : "☰";
-});
-
-navLinks.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", () => {
-    navLinks.classList.remove("open");
-    menuToggle.setAttribute("aria-expanded", "false");
-    menuToggle.textContent = "☰";
+    menuToggle.setAttribute("aria-expanded", String(open));
+    menuToggle.setAttribute(
+      "aria-label",
+      open ? "Close navigation" : "Open navigation"
+    );
+    menuToggle.textContent = open ? "✕" : "☰";
   });
-});
+
+  navLinks.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      navLinks.classList.remove("open");
+      menuToggle.setAttribute("aria-expanded", "false");
+      menuToggle.setAttribute("aria-label", "Open navigation");
+      menuToggle.textContent = "☰";
+    });
+  });
+}
 
 // --------------------------------------------------
 // MESSAGE CHARACTER COUNTER
@@ -97,10 +133,16 @@ navLinks.querySelectorAll("a").forEach((link) => {
 
 const messageInput = $("#wishMessage");
 
-messageInput.addEventListener("input", () => {
-  $("#charCount").textContent =
-    `${messageInput.value.length} / 700`;
-});
+if (messageInput) {
+  messageInput.addEventListener("input", () => {
+    const counter = $("#charCount");
+
+    if (counter) {
+      counter.textContent =
+        `${messageInput.value.length} / 700`;
+    }
+  });
+}
 
 // --------------------------------------------------
 // HELPERS
@@ -118,6 +160,8 @@ function escapeHtml(value) {
 
 function showToast(message) {
   const toast = $("#toast");
+  if (!toast) return;
+
   toast.textContent = message;
   toast.classList.add("show");
 
@@ -127,42 +171,55 @@ function showToast(message) {
 }
 
 function setStatus(message, isError = false) {
-  $("#formStatus").textContent = message;
-  $("#formStatus").style.color = isError ? "#a03e2e" : "";
+  const status = $("#formStatus");
+  if (!status) return;
+
+  status.textContent = message;
+  status.style.color = isError ? "#a03e2e" : "";
 }
 
 function updateWishCount() {
-  $("#wishCount").textContent =
-    `${totalWishes} BIRTHDAY WISH${totalWishes === 1 ? "" : "ES"}`;
+  const countElement = $("#wishCount");
+  if (!countElement) return;
+
+  countElement.textContent =
+    `${totalWishes} BIRTHDAY WISH` +
+    `${totalWishes === 1 ? "" : "ES"}`;
 }
 
+// --------------------------------------------------
+// RENDER WISH
+// Returns false if this wish is already displayed.
+// --------------------------------------------------
 
-function renderWish(wish, sample = false, append = false) {
+function renderWish(wish, append = false) {
+  const list = $("#wishesList");
+  if (!list || !wish) return false;
+
+  if (
+    wish.id != null &&
+    Array.from(list.children).some(
+      (card) =>
+        card.dataset.wishId === String(wish.id)
+    )
+  ) {
+    return false;
+  }
+
   const name = escapeHtml(wish.name || "A friend");
   const message = escapeHtml(wish.message || "");
   const relationship = escapeHtml(
     wish.relationship || "A birthday guest"
   );
+
   const initial = escapeHtml(
     (wish.name || "A").trim().charAt(0).toUpperCase()
   );
 
-  const list = $("#wishesList");
-
-  // Avoid showing the same database wish twice.
-  if (
-    wish.id &&
-    Array.from(list.children).some(
-      card => card.dataset.wishId === String(wish.id)
-    )
-  ) {
-    return;
-  }
-
   const article = document.createElement("article");
   article.className = "wish-card";
 
-  if (wish.id) {
+  if (wish.id != null) {
     article.dataset.wishId = String(wish.id);
   }
 
@@ -172,44 +229,46 @@ function renderWish(wish, sample = false, append = false) {
       <p>${message}</p>
       <div class="wish-by">
         ${name.toUpperCase()}
-        <span> · ${
-          sample ? "PREVIEW" : relationship.toUpperCase()
-        }</span>
+        <span> · ${relationship.toUpperCase()}</span>
       </div>
     </div>
   `;
 
   if (append) {
-    list.append(article);
+    list.appendChild(article);
   } else {
     list.prepend(article);
   }
+
+  return true;
 }
 
 // --------------------------------------------------
 // LOAD MORE BUTTON
 // --------------------------------------------------
 
-let loadMoreButton = null;
-
 function createLoadMoreButton() {
   if (loadMoreButton) return;
 
   loadMoreButton = document.createElement("button");
   loadMoreButton.type = "button";
-  loadMoreButton.textContent = "Load more wishes";
   loadMoreButton.className = "load-more-wishes";
+  loadMoreButton.textContent = "Load more wishes";
+
   loadMoreButton.style.cssText =
     "display:block;margin:24px auto;padding:14px 24px;" +
     "border:1px solid #c9b77f;background:transparent;" +
     "color:inherit;cursor:pointer;font:inherit;";
 
-  loadMoreButton.addEventListener("click", loadMoreWishes);
+  loadMoreButton.addEventListener("click", () => {
+    loadBirthdayWishes(false);
+  });
 
-  $("#wishesList").insertAdjacentElement(
-    "afterend",
-    loadMoreButton
-  );
+  const list = $("#wishesList");
+
+  if (list) {
+    list.insertAdjacentElement("afterend", loadMoreButton);
+  }
 }
 
 function updateLoadMoreButton() {
@@ -217,19 +276,25 @@ function updateLoadMoreButton() {
 
   loadMoreButton.hidden = !moreWishesAvailable;
   loadMoreButton.disabled = loadingWishes;
+
   loadMoreButton.textContent = loadingWishes
     ? "Loading wishes…"
     : "Load more wishes";
 }
 
 // --------------------------------------------------
-// LOAD WISHES FROM SUPABASE
+// COUNT SAVED WISHES
 // --------------------------------------------------
 
 async function refreshTotalCount() {
+  if (!db) return;
+
   const { count, error } = await db
     .from("birthday_wishes")
-    .select("*", { count: "exact", head: true });
+    .select("id", {
+      count: "exact",
+      head: true
+    });
 
   if (error) {
     console.error("Could not count wishes:", error.message);
@@ -240,40 +305,31 @@ async function refreshTotalCount() {
   updateWishCount();
 }
 
+// --------------------------------------------------
+// LOAD WISHES FROM SUPABASE
+// All publicly readable wishes are shown.
+// No approved filter is used.
+// --------------------------------------------------
 
-const WISHES_PER_PAGE = 30;
-let wishesOffset = 0;
-let totalWishes = 0;
-let loadingWishes = false;
-let moreWishesAvailable = false;
-
-const loadMoreButton = document.createElement("button");
-loadMoreButton.type = "button";
-loadMoreButton.textContent = "Load more wishes";
-loadMoreButton.className = "load-more-wishes";
-loadMoreButton.style.cssText =
-  "display:block;margin:24px auto;padding:14px 24px;" +
-  "border:1px solid #c9b77f;background:transparent;" +
-  "color:inherit;cursor:pointer;font:inherit;";
-
-$("#wishesList").insertAdjacentElement("afterend", loadMoreButton);
-
-async function loadApprovedWishes(reset = false) {
+async function loadBirthdayWishes(reset = false) {
   if (!db || loadingWishes) return;
 
+  const list = $("#wishesList");
+  if (!list) return;
+
   loadingWishes = true;
-  loadMoreButton.disabled = true;
-  loadMoreButton.textContent = "Loading wishes…";
+
+  if (reset) {
+    wishesOffset = 0;
+    moreWishesAvailable = false;
+    list.innerHTML = "";
+  }
+
+  updateLoadMoreButton();
 
   try {
-    if (reset) {
-      wishesOffset = 0;
-      moreWishesAvailable = false;
-      $("#wishesList").innerHTML = "";
-    }
-
     const from = wishesOffset;
-    const to = from + WISHES_PER_PAGE - 1;
+    const to = from + PAGE_SIZE - 1;
 
     const { data, error, count } = await db
       .from("birthday_wishes")
@@ -281,52 +337,55 @@ async function loadApprovedWishes(reset = false) {
         "id, name, relationship, message, created_at",
         { count: "exact" }
       )
-      // No approved filter: display all birthday wishes.
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to);
 
     if (error) throw error;
 
-    data.forEach((wish, index) => {
-      // First page: newest wish first.
-      // Later pages: append older wishes at the bottom.
-      renderWish(wish, false, !reset);
+    const wishes = data || [];
+
+    wishes.forEach((wish) => {
+      // Newest wishes first on the first page.
+      // Older wishes are appended on subsequent pages.
+      renderWish(wish, !reset);
     });
 
-    wishesOffset += data.length;
+    wishesOffset += wishes.length;
     totalWishes = count ?? wishesOffset;
-    moreWishesAvailable = wishesOffset < totalWishes;
 
-    $("#wishCount").textContent =
-      `${totalWishes} BIRTHDAY WISH${totalWishes === 1 ? "" : "ES"}`;
+    moreWishesAvailable =
+      wishesOffset < totalWishes;
 
-    $("#wallDisclaimer").textContent =
-      "Birthday wishes appear automatically after submission. " +
-      "Thank you for being part of this story!";
+    updateWishCount();
 
+    const disclaimer = $("#wallDisclaimer");
+
+    if (disclaimer) {
+      disclaimer.textContent =
+        "Birthday wishes appear automatically after submission. " +
+        "Thank you for being part of this story!";
+    }
   } catch (error) {
-    console.error("Could not load birthday wishes:", error.message);
+    console.error("Could not load birthday wishes:", error);
 
-    $("#wallDisclaimer").textContent =
-      "The wish wall could not load. Please try again later.";
+    const disclaimer = $("#wallDisclaimer");
+
+    if (disclaimer) {
+      disclaimer.textContent =
+        "The wish wall could not load. Please try again.";
+    }
+
+    showToast("Could not load wishes. Please try again.");
   } finally {
     loadingWishes = false;
-    loadMoreButton.disabled = false;
-    loadMoreButton.hidden = !moreWishesAvailable;
-    loadMoreButton.textContent = "Load more wishes";
+    updateLoadMoreButton();
   }
 }
 
-loadMoreButton.addEventListener("click", () => {
-  loadApprovedWishes(false);
-});
-
-
 // --------------------------------------------------
-// LIVE UPDATES FOR ALL VISITORS
-// Requires birthday_wishes to be enabled in the
-// Supabase Realtime publication.
+// REALTIME UPDATES
+// Enable birthday_wishes in Supabase Realtime first.
 // --------------------------------------------------
 
 function startRealtimeUpdates() {
@@ -341,14 +400,23 @@ function startRealtimeUpdates() {
         schema: "public",
         table: "birthday_wishes"
       },
-      (payload) => {
-        const wish = payload.new;
+      async (payload) => {
+        const inserted = payload.new;
 
-        // New messages appear at the top without a refresh.
-        renderWish(wish, false, true);
+        // A new wish goes to the top.
+        // renderWish prevents duplicate display.
+        renderWish(inserted, false);
 
-        totalWishes += 1;
-        updateWishCount();
+        // Read the database count instead of incrementing
+        // it, preventing double counting.
+        await refreshTotalCount();
+
+        // Keep pagination available when new wishes arrive.
+        if (wishesOffset < totalWishes) {
+          moreWishesAvailable = true;
+        }
+
+        updateLoadMoreButton();
       }
     )
     .subscribe((status) => {
@@ -360,107 +428,139 @@ function startRealtimeUpdates() {
 // SUBMIT A BIRTHDAY WISH
 // --------------------------------------------------
 
-$("#wishForm").addEventListener("submit", async (event) => {
-  event.preventDefault();
+const wishForm = $("#wishForm");
 
-  const formElement = event.currentTarget;
-  const form = new FormData(formElement);
+if (wishForm) {
+  wishForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  const wish = {
-    name: String(form.get("name") || "").trim(),
-    relationship: String(form.get("relationship") || "").trim(),
-    message: String(form.get("message") || "").trim()
-  };
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
 
-  if (!wish.name || !wish.message) {
-    setStatus("Please add your name and a message.", true);
-    return;
-  }
+    const wish = {
+      name: String(form.get("name") || "").trim(),
+      relationship: String(
+        form.get("relationship") || ""
+      ).trim(),
+      message: String(form.get("message") || "").trim()
+    };
 
-  if (wish.name.length > 60 || wish.message.length > 700) {
-    setStatus("Please shorten your name or message.", true);
-    return;
-  }
+    if (!wish.name || !wish.message) {
+      setStatus("Please add your name and a message.", true);
+      return;
+    }
 
-  if (!db) {
-    setStatus(
-      "The guestbook is not connected. Please try again later.",
-      true
-    );
-    return;
-  }
+    if (
+      wish.name.length > 60 ||
+      wish.message.length > 700
+    ) {
+      setStatus(
+        "Please shorten your name or message.",
+        true
+      );
+      return;
+    }
 
-  const submitButton = formElement.querySelector(
-    'button[type="submit"]'
-  );
+    if (!db) {
+      setStatus(
+        "The guestbook is not connected. Please try again later.",
+        true
+      );
+      return;
+    }
 
-  submitButton.disabled = true;
-  submitButton.textContent = "Sending…";
-  setStatus("");
-
-  try {
-    const { data, error } = await db
-      .from("birthday_wishes")
-      .insert([{
-        name: wish.name,
-        relationship: wish.relationship || null,
-        message: wish.message,
-        approved: true
-      }])
-      .select("id, name, relationship, message, created_at")
-      .single();
-
-    if (error) throw error;
-
-    // Display the returned saved wish immediately.
-    renderWish(data, false, true);
-
-    // Realtime may also report this same wish; duplicate IDs
-    // are ignored by renderWish().
-    totalWishes += 1;
-    updateWishCount();
-
-    formElement.reset();
-    $("#charCount").textContent = "0 / 700";
-
-    setStatus("Your message has been delivered!");
-    showToast("Your message has been delivered!");
-
-    // Keep the public count accurate.
-    refreshTotalCount();
-  } catch (error) {
-    console.error("Wish submission failed:", error);
-
-    setStatus(
-      "Sorry, your wish could not be submitted. Please try again.",
-      true
+    const submitButton = formElement.querySelector(
+      'button[type="submit"]'
     );
 
-    showToast("Your wish could not be sent. Please try again.");
-  } finally {
-    submitButton.disabled = false;
-    submitButton.innerHTML =
-      'Send birthday wish <span>↗</span>';
-  }
-});
+    if (!submitButton) return;
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending…";
+    setStatus("");
+
+    try {
+      const { data, error } = await db
+        .from("birthday_wishes")
+        .insert([{
+          name: wish.name,
+          relationship: wish.relationship || null,
+          message: wish.message,
+
+          // Automatically publish the wish.
+          // No manual approval is required.
+          approved: true
+        }])
+        .select(
+          "id, name, relationship, message, created_at"
+        )
+        .single();
+
+      if (error) throw error;
+
+      // Display immediately without waiting for Realtime.
+      renderWish(data, false);
+
+      formElement.reset();
+
+      if ($("#charCount")) {
+        $("#charCount").textContent = "0 / 700";
+      }
+
+      setStatus("Your message has been delivered!");
+      showToast("Your message has been delivered!");
+
+      // Refresh the exact database count.
+      await refreshTotalCount();
+
+      if (wishesOffset < totalWishes) {
+        moreWishesAvailable = true;
+      }
+
+      updateLoadMoreButton();
+    } catch (error) {
+      console.error("Wish submission failed:", error);
+
+      setStatus(
+        "Sorry, your wish could not be submitted. Please try again.",
+        true
+      );
+
+      showToast(
+        "Your wish could not be sent. Please try again."
+      );
+    } finally {
+      submitButton.disabled = false;
+      submitButton.innerHTML =
+        'Send birthday wish <span>↗</span>';
+    }
+  });
+}
 
 // --------------------------------------------------
-// INITIALISE THE WISH WALL
+// INITIALISE
 // --------------------------------------------------
 
 async function initialiseWishWall() {
   createLoadMoreButton();
 
   if (!db) {
-    $("#wallDisclaimer").textContent =
-      "The public guestbook is not connected yet. Please try again later.";
+    if ($("#wallDisclaimer")) {
+      $("#wallDisclaimer").textContent =
+        "The public guestbook is not connected. Please try again later.";
+    }
 
-    $("#wishCount").textContent = "GUESTBOOK OFFLINE";
+    if ($("#wishCount")) {
+      $("#wishCount").textContent = "GUESTBOOK OFFLINE";
+    }
+
     setStatus("Guestbook connection unavailable.", true);
     return;
   }
 
   await loadBirthdayWishes(true);
+
+  // Start live updates after the initial database load.
   startRealtimeUpdates();
 }
 
