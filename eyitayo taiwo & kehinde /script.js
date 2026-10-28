@@ -136,26 +136,28 @@ function updateWishCount() {
     `${totalWishes} BIRTHDAY WISH${totalWishes === 1 ? "" : "ES"}`;
 }
 
-function renderWish(wish, sample = false, prepend = true) {
-  const list = $("#wishesList");
 
-  // Prevent the same wish from appearing twice.
-  if (
-    wish.id &&
-    list.querySelector(`[data-wish-id="${CSS.escape(String(wish.id))}"]`)
-  ) {
-    return;
-  }
-
+function renderWish(wish, sample = false, append = false) {
   const name = escapeHtml(wish.name || "A friend");
   const message = escapeHtml(wish.message || "");
   const relationship = escapeHtml(
     wish.relationship || "A birthday guest"
   );
-
   const initial = escapeHtml(
     (wish.name || "A").trim().charAt(0).toUpperCase()
   );
+
+  const list = $("#wishesList");
+
+  // Avoid showing the same database wish twice.
+  if (
+    wish.id &&
+    Array.from(list.children).some(
+      card => card.dataset.wishId === String(wish.id)
+    )
+  ) {
+    return;
+  }
 
   const article = document.createElement("article");
   article.className = "wish-card";
@@ -177,10 +179,10 @@ function renderWish(wish, sample = false, prepend = true) {
     </div>
   `;
 
-  if (prepend) {
-    list.prepend(article);
-  } else {
+  if (append) {
     list.append(article);
+  } else {
+    list.prepend(article);
   }
 }
 
