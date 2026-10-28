@@ -436,8 +436,9 @@
       if (error) throw error;
 
       await verifyAdmin(data.user);
-      showDashboard(data.user);
-      await loadWishes();
+showDashboard(data.user);
+setBusy(false);
+await loadWishes();
     } catch (error) {
       showLogin(error.message || "Sign-in failed.");
     } finally {
