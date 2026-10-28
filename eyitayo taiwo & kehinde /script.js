@@ -240,55 +240,88 @@ async function refreshTotalCount() {
   updateWishCount();
 }
 
-async function loadBirthdayWishes(reset = false) {
+
+const WISHES_PER_PAGE = 30;
+let wishesOffset = 0;
+let totalWishes = 0;
+let loadingWishes = false;
+let moreWishesAvailable = false;
+
+const loadMoreButton = document.createElement("button");
+loadMoreButton.type = "button";
+loadMoreButton.textContent = "Load more wishes";
+loadMoreButton.className = "load-more-wishes";
+loadMoreButton.style.cssText =
+  "display:block;margin:24px auto;padding:14px 24px;" +
+  "border:1px solid #c9b77f;background:transparent;" +
+  "color:inherit;cursor:pointer;font:inherit;";
+
+$("#wishesList").insertAdjacentElement("afterend", loadMoreButton);
+
+async function loadApprovedWishes(reset = false) {
   if (!db || loadingWishes) return;
 
   loadingWishes = true;
-  updateLoadMoreButton();
+  loadMoreButton.disabled = true;
+  loadMoreButton.textContent = "Loading wishes…";
 
   try {
     if (reset) {
-      loadedCount = 0;
+      wishesOffset = 0;
       moreWishesAvailable = false;
       $("#wishesList").innerHTML = "";
     }
 
-    const from = loadedCount;
-    const to = from + PAGE_SIZE - 1;
+    const from = wishesOffset;
+    const to = from + WISHES_PER_PAGE - 1;
 
-    const { data, error } = await db
+    const { data, error, count } = await db
       .from("birthday_wishes")
-      .select("id, name, relationship, message, created_at")
+      .select(
+        "id, name, relationship, message, created_at",
+        { count: "exact" }
+      )
+      // No approved filter: display all birthday wishes.
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to);
 
     if (error) throw error;
 
-    data.forEach((wish) => renderWish(wish, false, false));
+    data.forEach((wish, index) => {
+      // First page: newest wish first.
+      // Later pages: append older wishes at the bottom.
+      renderWish(wish, false, !reset);
+    });
 
-    loadedCount += data.length;
-    moreWishesAvailable = data.length === PAGE_SIZE;
+    wishesOffset += data.length;
+    totalWishes = count ?? wishesOffset;
+    moreWishesAvailable = wishesOffset < totalWishes;
+
+    $("#wishCount").textContent =
+      `${totalWishes} BIRTHDAY WISH${totalWishes === 1 ? "" : "ES"}`;
 
     $("#wallDisclaimer").textContent =
       "Birthday wishes appear automatically after submission. " +
       "Thank you for being part of this story!";
 
-    await refreshTotalCount();
   } catch (error) {
     console.error("Could not load birthday wishes:", error.message);
 
     $("#wallDisclaimer").textContent =
-      "The wish wall could not load. Please refresh and try again.";
+      "The wish wall could not load. Please try again later.";
   } finally {
     loadingWishes = false;
-    updateLoadMoreButton();
+    loadMoreButton.disabled = false;
+    loadMoreButton.hidden = !moreWishesAvailable;
+    loadMoreButton.textContent = "Load more wishes";
   }
 }
 
-async function loadMoreWishes() {
-  await loadBirthdayWishes(false);
-}
+loadMoreButton.addEventListener("click", () => {
+  loadApprovedWishes(false);
+});
+
 
 // --------------------------------------------------
 // LIVE UPDATES FOR ALL VISITORS
