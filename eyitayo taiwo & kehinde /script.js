@@ -44,7 +44,8 @@
     "IMG_20200315_115918_4.jpg",
     "DSC_2091.jpg",
     "DSC_2163.jpg",
-    ""
+    "team-2.jpg",
+    "ChatGPT Image Oct 1, 2026, 04_45_18 AM.png"
   ];
 
   const folder = "images/childhood/";
