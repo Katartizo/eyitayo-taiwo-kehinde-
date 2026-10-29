@@ -1,13 +1,15 @@
 
+/* =========================================
+   A LIFE IN FRAMES
+   Childhood Gallery + Birthday Guestbook
+   ========================================= */
 
-/* =====================================
-   A LIFE IN FRAMES: CHILDHOOD GALLERY
-   Original filenames; guestbook untouched
-   ===================================== */
+
+/* =========================================
+   1. CHILDHOOD PHOTO GALLERY
+   ========================================= */
 
 (() => {
-  // Add every real filename here, in chronological order.
-  // Paths are relative to index.html.
   const childhoodPhotos = [
     "IMG_20191020_145025_0.jpg",
     "IMG_20191020_154223_1.jpg",
@@ -50,6 +52,7 @@
   ];
 
   const folder = "images/childhood/";
+
   const viewport = document.getElementById("childhoodViewport");
   const track = document.getElementById("childhoodTrack");
   const previous = document.getElementById("childhoodPrev");
@@ -59,20 +62,37 @@
   const lightboxCaption = document.getElementById("childhoodLightboxCaption");
   const closeLightbox = document.getElementById("childhoodLightboxClose");
 
-  if (!viewport || !track || !previous || !next ||
-      !lightbox || !lightboxImage || !lightboxCaption ||
-      !closeLightbox) {
+  if (
+    !viewport ||
+    !track ||
+    !previous ||
+    !next ||
+    !lightbox ||
+    !lightboxImage ||
+    !lightboxCaption ||
+    !closeLightbox
+  ) {
     console.warn("Childhood gallery HTML elements are missing.");
     return;
   }
+
+  // Prevent duplicate gallery cards if this code is initialized again.
+  track.innerHTML = "";
 
   let dragging = false;
   let dragMoved = false;
   let startX = 0;
   let startScroll = 0;
   let paused = false;
-  let lastTime = 0;
+  let groupTimer = null;
+  let groupScrollInProgress = false;
+  let groupTimeout = null;
 
+  const GROUP_SIZE = 1;
+  const GROUP_INTERVAL = 2500;
+  const GROUP_ANIMATION_TIME = 800;
+
+  // Build the gallery using the original photo filenames.
   childhoodPhotos.forEach((filename, index) => {
     const figure = document.createElement("figure");
     figure.className = "childhood-card";
@@ -80,7 +100,10 @@
     const button = document.createElement("button");
     button.type = "button";
     button.className = "childhood-photo-button";
-    button.setAttribute("aria-label", `Enlarge childhood photo ${index + 1}`);
+    button.setAttribute(
+      "aria-label",
+      `Enlarge childhood photo ${index + 1}`
+    );
 
     const image = document.createElement("img");
     image.src = folder + filename;
@@ -99,7 +122,9 @@
     const label = document.createElement("span");
     const title = document.createElement("b");
 
-    label.textContent = `MEMORY ${String(index + 1).padStart(2, "0")}`;
+    label.textContent =
+      `MEMORY ${String(index + 1).padStart(2, "0")}`;
+
     title.textContent = "A moment in our story";
 
     caption.append(label, title);
@@ -123,42 +148,85 @@
     });
   });
 
-  closeLightbox.addEventListener("click", () => lightbox.close());
-
-  lightbox.addEventListener("click", event => {
-    if (event.target === lightbox) lightbox.close();
+  closeLightbox.addEventListener("click", () => {
+    lightbox.close();
   });
 
-  function getStep() {
-    const card = track.querySelector(".childhood-card:not([hidden])");
-    return card ? card.getBoundingClientRect().width + 18 : 240;
+  lightbox.addEventListener("click", event => {
+    if (event.target === lightbox) {
+      lightbox.close();
+    }
+  });
+
+  function getVisibleCards() {
+    return Array.from(
+      track.querySelectorAll(".childhood-card:not([hidden])")
+    );
+  }
+
+  function getCardStep() {
+    const card = getVisibleCards()[0];
+
+    if (!card) return 240;
+
+    const styles = window.getComputedStyle(track);
+    const gap = parseFloat(styles.columnGap) || 18;
+
+    return card.getBoundingClientRect().width + gap;
   }
 
   function updateArrows() {
-    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    const maxScroll = Math.max(
+      0,
+      viewport.scrollWidth - viewport.clientWidth
+    );
+
     previous.disabled = viewport.scrollLeft <= 2;
     next.disabled = viewport.scrollLeft >= maxScroll - 2;
   }
 
+  // Manual arrows move one photo position.
   previous.addEventListener("click", () => {
-    viewport.scrollBy({ left: -getStep(), behavior: "smooth" });
+    pauseGroupScrolling();
+
+    viewport.scrollBy({
+      left: -getCardStep(),
+      behavior: "smooth"
+    });
+
+    resumeGroupScrolling();
   });
 
   next.addEventListener("click", () => {
-    viewport.scrollBy({ left: getStep(), behavior: "smooth" });
+    pauseGroupScrolling();
+
+    viewport.scrollBy({
+      left: getCardStep(),
+      behavior: "smooth"
+    });
+
+    resumeGroupScrolling();
   });
 
-  viewport.addEventListener("scroll", updateArrows, { passive: true });
+  viewport.addEventListener("scroll", updateArrows, {
+    passive: true
+  });
+
   window.addEventListener("resize", updateArrows);
 
-  // Mouse drag support; mobile finger swiping uses native scrolling.
+  // Mouse dragging for computers; native swiping for phones.
   viewport.addEventListener("pointerdown", event => {
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    if (event.pointerType !== "mouse" || event.button !== 0) {
+      return;
+    }
 
     dragging = true;
     dragMoved = false;
+    pauseGroupScrolling();
+
     startX = event.clientX;
     startScroll = viewport.scrollLeft;
+
     viewport.classList.add("is-dragging");
     viewport.setPointerCapture(event.pointerId);
   });
@@ -167,60 +235,152 @@
     if (!dragging) return;
 
     const distance = event.clientX - startX;
-    if (Math.abs(distance) > 5) dragMoved = true;
-    if (dragMoved) viewport.scrollLeft = startScroll - distance;
+
+    if (Math.abs(distance) > 5) {
+      dragMoved = true;
+    }
+
+    if (dragMoved) {
+      viewport.scrollLeft = startScroll - distance;
+    }
   });
 
   function stopDragging() {
     dragging = false;
     viewport.classList.remove("is-dragging");
+    resumeGroupScrolling();
   }
 
   viewport.addEventListener("pointerup", stopDragging);
   viewport.addEventListener("pointercancel", stopDragging);
   viewport.addEventListener("lostpointercapture", stopDragging);
 
-  // Slow automatic scrolling; pauses while visitors interact.
-  function animate(time) {
-    requestAnimationFrame(animate);
+  // Find the first card closest to the current scroll position.
+  function getCurrentCardIndex(cards) {
+    if (!cards.length) return 0;
 
-    if (!lastTime) lastTime = time;
-    const elapsed = Math.min(time - lastTime, 40);
-    lastTime = time;
+    const currentLeft = viewport.scrollLeft;
+    let closestIndex = 0;
+    let closestDistance = Infinity;
 
-    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    cards.forEach((card, index) => {
+      const position = card.offsetLeft - cards[0].offsetLeft;
+      const distance = Math.abs(position - currentLeft);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    return closestIndex;
+  }
+
+  // Move forward by three photo positions per slide.
+  function moveToNextGroup() {
+    if (
+      paused ||
+      dragging ||
+      lightbox.open ||
+      document.hidden ||
+      groupScrollInProgress
+    ) {
+      return;
+    }
+
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    if (paused || dragging || lightbox.open || reducedMotion ||
-        maxScroll <= 0) return;
+    if (reducedMotion) return;
 
-    if (viewport.scrollLeft >= maxScroll - 1) {
-      viewport.scrollLeft = 0;
+    const cards = getVisibleCards();
+
+    if (cards.length <= GROUP_SIZE) return;
+
+    const firstCard = cards[0];
+    const currentIndex = getCurrentCardIndex(cards);
+    const targetIndex = currentIndex + GROUP_SIZE;
+
+    let targetPosition;
+
+    if (targetIndex >= cards.length) {
+      // Return smoothly to the beginning after the final group.
+      targetPosition = 0;
     } else {
-      viewport.scrollLeft += elapsed * 0.025;
+      targetPosition =
+        cards[targetIndex].offsetLeft - firstCard.offsetLeft;
     }
+
+    groupScrollInProgress = true;
+
+    viewport.scrollTo({
+      left: targetPosition,
+      behavior: "smooth"
+    });
+
+    clearTimeout(groupTimeout);
+
+    groupTimeout = window.setTimeout(() => {
+      groupScrollInProgress = false;
+      updateArrows();
+    }, GROUP_ANIMATION_TIME);
   }
 
-  viewport.addEventListener("mouseenter", () => paused = true);
-  viewport.addEventListener("mouseleave", () => paused = false);
-  viewport.addEventListener("focusin", () => paused = true);
-  viewport.addEventListener("focusout", () => paused = false);
-  viewport.addEventListener("touchstart", () => paused = true, { passive: true });
-  viewport.addEventListener("touchend", () => paused = false, { passive: true });
-  viewport.addEventListener("touchcancel", () => paused = false, { passive: true });
+  function startGroupScrolling() {
+    clearInterval(groupTimer);
+
+    groupTimer = window.setInterval(
+      moveToNextGroup,
+      GROUP_INTERVAL
+    );
+  }
+
+  function pauseGroupScrolling() {
+    paused = true;
+  }
+
+  function resumeGroupScrolling() {
+    paused = false;
+  }
+
+  viewport.addEventListener("mouseenter", pauseGroupScrolling);
+  viewport.addEventListener("mouseleave", resumeGroupScrolling);
+  viewport.addEventListener("focusin", pauseGroupScrolling);
+  viewport.addEventListener("focusout", resumeGroupScrolling);
+
+  viewport.addEventListener("touchstart", pauseGroupScrolling, {
+    passive: true
+  });
+
+  viewport.addEventListener("touchend", resumeGroupScrolling, {
+    passive: true
+  });
+
+  viewport.addEventListener("touchcancel", resumeGroupScrolling, {
+    passive: true
+  });
+
+  lightbox.addEventListener("close", () => {
+    resumeGroupScrolling();
+  });
 
   document.addEventListener("visibilitychange", () => {
-    lastTime = 0;
+    if (document.hidden) {
+      pauseGroupScrolling();
+    } else {
+      resumeGroupScrolling();
+    }
   });
 
   updateArrows();
-  requestAnimationFrame(animate);
+  startGroupScrolling();
 })();
 
 
-
+/* =========================================
+   2. SUPABASE CONFIGURATION
+   ========================================= */
 
 const SUPABASE_URL =
   "https://mgosavprtrwwcbgaenul.supabase.co";
@@ -231,7 +391,7 @@ const SUPABASE_ANON_KEY =
 const birthdayDate = new Date("2026-11-22T00:00:00");
 const PAGE_SIZE = 30;
 
-const $ = (selector) => document.querySelector(selector);
+const $ = selector => document.querySelector(selector);
 
 const supabaseReady = Boolean(
   SUPABASE_URL &&
@@ -251,9 +411,10 @@ if ($("#year")) {
   $("#year").textContent = new Date().getFullYear();
 }
 
-// --------------------------------------------------
-// STATE
-// --------------------------------------------------
+
+/* =========================================
+   3. GUESTBOOK STATE
+   ========================================= */
 
 let totalWishes = 0;
 let wishesOffset = 0;
@@ -262,9 +423,10 @@ let moreWishesAvailable = false;
 let realtimeChannel = null;
 let loadMoreButton = null;
 
-// --------------------------------------------------
-// COUNTDOWN
-// --------------------------------------------------
+
+/* =========================================
+   4. BIRTHDAY COUNTDOWN
+   ========================================= */
 
 function updateCountdown() {
   const now = new Date();
@@ -316,9 +478,10 @@ function updateCountdown() {
 updateCountdown();
 window.setInterval(updateCountdown, 1000);
 
-// --------------------------------------------------
-// MOBILE NAVIGATION
-// --------------------------------------------------
+
+/* =========================================
+   5. MOBILE NAVIGATION
+   ========================================= */
 
 const menuToggle = $("#menuToggle");
 const navLinks = $("#navLinks");
@@ -332,10 +495,11 @@ if (menuToggle && navLinks) {
       "aria-label",
       open ? "Close navigation" : "Open navigation"
     );
+
     menuToggle.textContent = open ? "✕" : "☰";
   });
 
-  navLinks.querySelectorAll("a").forEach((link) => {
+  navLinks.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", () => {
       navLinks.classList.remove("open");
       menuToggle.setAttribute("aria-expanded", "false");
@@ -345,9 +509,10 @@ if (menuToggle && navLinks) {
   });
 }
 
-// --------------------------------------------------
-// MESSAGE CHARACTER COUNTER
-// --------------------------------------------------
+
+/* =========================================
+   6. MESSAGE CHARACTER COUNTER
+   ========================================= */
 
 const messageInput = $("#wishMessage");
 
@@ -362,12 +527,13 @@ if (messageInput) {
   });
 }
 
-// --------------------------------------------------
-// HELPERS
-// --------------------------------------------------
+
+/* =========================================
+   7. GUESTBOOK HELPERS
+   ========================================= */
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ({
+  return String(value).replace(/[&<>"']/g, character => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -405,20 +571,22 @@ function updateWishCount() {
     `${totalWishes === 1 ? "" : "ES"}`;
 }
 
-// --------------------------------------------------
-// RENDER WISH
-// Returns false if this wish is already displayed.
-// --------------------------------------------------
+
+/* =========================================
+   8. RENDER A BIRTHDAY WISH
+   ========================================= */
 
 function renderWish(wish, append = false) {
   const list = $("#wishesList");
+
   if (!list || !wish) return false;
 
+  // Avoid duplicate cards when Realtime and form submission
+  // report the same wish.
   if (
     wish.id != null &&
     Array.from(list.children).some(
-      (card) =>
-        card.dataset.wishId === String(wish.id)
+      card => card.dataset.wishId === String(wish.id)
     )
   ) {
     return false;
@@ -461,9 +629,10 @@ function renderWish(wish, append = false) {
   return true;
 }
 
-// --------------------------------------------------
-// LOAD MORE BUTTON
-// --------------------------------------------------
+
+/* =========================================
+   9. LOAD MORE WISHES BUTTON
+   ========================================= */
 
 function createLoadMoreButton() {
   if (loadMoreButton) return;
@@ -500,9 +669,10 @@ function updateLoadMoreButton() {
     : "Load more wishes";
 }
 
-// --------------------------------------------------
-// COUNT SAVED WISHES
-// --------------------------------------------------
+
+/* =========================================
+   10. COUNT SAVED WISHES
+   ========================================= */
 
 async function refreshTotalCount() {
   if (!db) return;
@@ -515,7 +685,10 @@ async function refreshTotalCount() {
     });
 
   if (error) {
-    console.error("Could not count wishes:", error.message);
+    console.error(
+      "Could not count wishes:",
+      error.message
+    );
     return;
   }
 
@@ -523,11 +696,10 @@ async function refreshTotalCount() {
   updateWishCount();
 }
 
-// --------------------------------------------------
-// LOAD WISHES FROM SUPABASE
-// All publicly readable wishes are shown.
-// No approved filter is used.
-// --------------------------------------------------
+
+/* =========================================
+   11. LOAD WISHES FROM SUPABASE
+   ========================================= */
 
 async function loadBirthdayWishes(reset = false) {
   if (!db || loadingWishes) return;
@@ -563,9 +735,8 @@ async function loadBirthdayWishes(reset = false) {
 
     const wishes = data || [];
 
-    wishes.forEach((wish) => {
-      // Newest wishes first on the first page.
-      // Older wishes are appended on subsequent pages.
+    wishes.forEach(wish => {
+      // Newest first; older pages are appended below.
       renderWish(wish, !reset);
     });
 
@@ -601,10 +772,10 @@ async function loadBirthdayWishes(reset = false) {
   }
 }
 
-// --------------------------------------------------
-// REALTIME UPDATES
-// Enable birthday_wishes in Supabase Realtime first.
-// --------------------------------------------------
+
+/* =========================================
+   12. REALTIME GUESTBOOK UPDATES
+   ========================================= */
 
 function startRealtimeUpdates() {
   if (!db) return;
@@ -618,18 +789,14 @@ function startRealtimeUpdates() {
         schema: "public",
         table: "birthday_wishes"
       },
-      async (payload) => {
+      async payload => {
         const inserted = payload.new;
 
-        // A new wish goes to the top.
-        // renderWish prevents duplicate display.
+        // Display new wishes immediately.
         renderWish(inserted, false);
 
-        // Read the database count instead of incrementing
-        // it, preventing double counting.
         await refreshTotalCount();
 
-        // Keep pagination available when new wishes arrive.
         if (wishesOffset < totalWishes) {
           moreWishesAvailable = true;
         }
@@ -637,19 +804,20 @@ function startRealtimeUpdates() {
         updateLoadMoreButton();
       }
     )
-    .subscribe((status) => {
+    .subscribe(status => {
       console.log("Birthday wish live updates:", status);
     });
 }
 
-// --------------------------------------------------
-// SUBMIT A BIRTHDAY WISH
-// --------------------------------------------------
+
+/* =========================================
+   13. SUBMIT A BIRTHDAY WISH
+   ========================================= */
 
 const wishForm = $("#wishForm");
 
 if (wishForm) {
-  wishForm.addEventListener("submit", async (event) => {
+  wishForm.addEventListener("submit", async event => {
     event.preventDefault();
 
     const formElement = event.currentTarget;
@@ -664,7 +832,10 @@ if (wishForm) {
     };
 
     if (!wish.name || !wish.message) {
-      setStatus("Please add your name and a message.", true);
+      setStatus(
+        "Please add your name and a message.",
+        true
+      );
       return;
     }
 
@@ -704,9 +875,6 @@ if (wishForm) {
           name: wish.name,
           relationship: wish.relationship || null,
           message: wish.message,
-
-          // Automatically publish the wish.
-          // No manual approval is required.
           approved: true
         }])
         .select(
@@ -716,7 +884,7 @@ if (wishForm) {
 
       if (error) throw error;
 
-      // Display immediately without waiting for Realtime.
+      // Show the submitted wish immediately.
       renderWish(data, false);
 
       formElement.reset();
@@ -728,7 +896,6 @@ if (wishForm) {
       setStatus("Your message has been delivered!");
       showToast("Your message has been delivered!");
 
-      // Refresh the exact database count.
       await refreshTotalCount();
 
       if (wishesOffset < totalWishes) {
@@ -755,9 +922,10 @@ if (wishForm) {
   });
 }
 
-// --------------------------------------------------
-// INITIALISE
-// --------------------------------------------------
+
+/* =========================================
+   14. INITIALISE THE GUESTBOOK
+   ========================================= */
 
 async function initialiseWishWall() {
   createLoadMoreButton();
@@ -777,204 +945,7 @@ async function initialiseWishWall() {
   }
 
   await loadBirthdayWishes(true);
-
-  // Start live updates after the initial database load.
   startRealtimeUpdates();
 }
 
 initialiseWishWall();
-
-
-
-/* =====================================
-   A LIFE IN FRAMES: CHILDHOOD GALLERY
-   Independent from the birthday guestbook
-   ===================================== */
-(() => {
-  const PHOTO_COUNT = 45;
-
-  const viewport = document.getElementById("childhoodViewport");
-  const track = document.getElementById("childhoodTrack");
-  const previous = document.getElementById("childhoodPrev");
-  const next = document.getElementById("childhoodNext");
-  const lightbox = document.getElementById("childhoodLightbox");
-  const lightboxImage = document.getElementById("childhoodLightboxImage");
-  const lightboxCaption = document.getElementById("childhoodLightboxCaption");
-  const closeLightbox = document.getElementById("childhoodLightboxClose");
-
-  if (!viewport || !track || !previous || !next ||
-      !lightbox || !lightboxImage || !lightboxCaption ||
-      !closeLightbox) return;
-
-  const memories = Array.from({ length: PHOTO_COUNT }, (_, index) => {
-    const number = index + 1;
-    return {
-      src: `images/childhood/childhood-${String(number).padStart(3, "0")}.jpg`,
-      title: `Memory ${number}`,
-      caption: "A precious moment in our story"
-    };
-  });
-
-  memories.forEach((memory, index) => {
-    const card = document.createElement("figure");
-    card.className = "childhood-card";
-
-    const photoButton = document.createElement("button");
-    photoButton.type = "button";
-    photoButton.className = "childhood-photo-button";
-    photoButton.setAttribute("aria-label", `Enlarge ${memory.title}`);
-
-    const image = document.createElement("img");
-    image.src = memory.src;
-    image.alt = memory.title;
-    image.loading = index < 3 ? "eager" : "lazy";
-    image.decoding = "async";
-    image.draggable = false;
-
-    image.addEventListener("error", () => {
-      card.hidden = true;
-      updateArrows();
-    });
-
-    const caption = document.createElement("figcaption");
-    const heading = document.createElement("h3");
-    const description = document.createElement("p");
-
-    heading.textContent = memory.title;
-    description.textContent = memory.caption;
-
-    photoButton.appendChild(image);
-    caption.append(heading, description);
-    card.append(photoButton, caption);
-    track.appendChild(card);
-
-    photoButton.addEventListener("click", () => {
-      if (dragMoved) {
-        dragMoved = false;
-        return;
-      }
-
-      lightboxImage.src = memory.src;
-      lightboxImage.alt = memory.title;
-      lightboxCaption.textContent =
-        `${memory.title} — ${memory.caption}`;
-
-      if (typeof lightbox.showModal === "function") {
-        lightbox.showModal();
-      }
-    });
-  });
-
-  closeLightbox.addEventListener("click", () => lightbox.close());
-
-  lightbox.addEventListener("click", event => {
-    if (event.target === lightbox) lightbox.close();
-  });
-
-  function cardStep() {
-    const card = track.querySelector(".childhood-card:not([hidden])");
-    return card ? card.getBoundingClientRect().width + 18 : 240;
-  }
-
-  function updateArrows() {
-    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
-    previous.disabled = viewport.scrollLeft <= 2;
-    next.disabled = viewport.scrollLeft >= maxScroll - 2;
-  }
-
-  previous.addEventListener("click", () => {
-    viewport.scrollBy({ left: -cardStep(), behavior: "smooth" });
-  });
-
-  next.addEventListener("click", () => {
-    viewport.scrollBy({ left: cardStep(), behavior: "smooth" });
-  });
-
-  viewport.addEventListener("scroll", updateArrows, { passive: true });
-  window.addEventListener("resize", updateArrows);
-
-  // Mouse dragging for desktop; touch swiping remains native.
-  let dragging = false;
-  let dragMoved = false;
-  let startX = 0;
-  let startScroll = 0;
-
-  viewport.addEventListener("pointerdown", event => {
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
-
-    dragging = true;
-    dragMoved = false;
-    startX = event.clientX;
-    startScroll = viewport.scrollLeft;
-    viewport.classList.add("is-dragging");
-    viewport.setPointerCapture(event.pointerId);
-  });
-
-  viewport.addEventListener("pointermove", event => {
-    if (!dragging) return;
-
-    const distance = event.clientX - startX;
-
-    if (Math.abs(distance) > 5) dragMoved = true;
-    if (dragMoved) viewport.scrollLeft = startScroll - distance;
-  });
-
-  function stopDragging() {
-    dragging = false;
-    viewport.classList.remove("is-dragging");
-  }
-
-  viewport.addEventListener("pointerup", stopDragging);
-  viewport.addEventListener("pointercancel", stopDragging);
-  viewport.addEventListener("lostpointercapture", stopDragging);
-
-  // Pause auto-scroll when visitors interact with the gallery.
-  let paused = false;
-  let lastTime = 0;
-
-  function animate(time) {
-    requestAnimationFrame(animate);
-
-    if (!lastTime) lastTime = time;
-    const elapsed = Math.min(time - lastTime, 40);
-    lastTime = time;
-
-    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
-    if (paused || dragging || lightbox.open || reducedMotion ||
-        maxScroll <= 0) return;
-
-    if (viewport.scrollLeft >= maxScroll - 1) {
-      viewport.scrollLeft = 0;
-    } else {
-      viewport.scrollLeft += elapsed * 0.025;
-    }
-  }
-
-  viewport.addEventListener("mouseenter", () => paused = true);
-  viewport.addEventListener("mouseleave", () => paused = false);
-  viewport.addEventListener("focusin", () => paused = true);
-  viewport.addEventListener("focusout", () => paused = false);
-  viewport.addEventListener("touchstart", () => paused = true, { passive: true });
-  viewport.addEventListener("touchend", () => paused = false, { passive: true });
-  viewport.addEventListener("touchcancel", () => paused = false, { passive: true });
-
-  document.addEventListener("visibilitychange", () => {
-    lastTime = 0;
-  });
-
-  updateArrows();
-  requestAnimationFrame(animate);
-})();
-
-
-
-/* CHILDHOOD PHOTO GALLERY */
-const childhoodPhotos = [
-  "IMG_20191020_155048_2.jpg",
-  "IMG_20191020_154223_1.jpg",
-  "IMG_20200315_115918_4.jpg",
-];
