@@ -89,15 +89,49 @@
       </div>
     </section>
 
-    <section class="gallery-section section-pad" id="memories">
-      <div class="section-kicker">03 — THE MEMORY ARCHIVE</div>
-      <div class="section-heading-row"><h2>Little moments.<br><em>Lasting meaning.</em></h2><p>Every photograph holds a version of us we never want to forget. These placeholders will become your personal archive.</p></div>
-      <div class="gallery-grid">
-        <figure class="gallery-card gallery-tall"><img src="https://images.unsplash.com/photo-1472162072942-cd5147eb3902?auto=format&fit=crop&w=900&q=85" alt="Placeholder memory photo"><figcaption><span>01 / THE BEGINNING</span><b>Our earliest chapters</b></figcaption></figure>
-        <figure class="gallery-card"><img src="https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=900&q=85" alt="Placeholder friends and family memory"><figcaption><span>02 / MY PEOPLE</span><b>The ones who made it special</b></figcaption></figure>
-        <figure class="gallery-card"><img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=85" alt="Placeholder friendship memory"><figcaption><span>03 / THE JOURNEY</span><b>Moments along the way</b></figcaption></figure>
-      </div>
-    </section>
+    
+<section class="gallery-section section-pad" id="memories">
+  <div class="section-kicker">03 — THE MEMORY ARCHIVE</div>
+
+  <div class="section-heading-row">
+    <h2>Little moments.<br><em>Lasting meaning.</em></h2>
+    <p>
+      Two lives, one beautiful story. Explore our childhood
+      memories, from the earliest chapters to the moments
+      that made us who we are.
+    </p>
+  </div>
+
+  <div class="childhood-gallery">
+    <button class="childhood-arrow" id="childhoodPrev"
+      type="button" aria-label="Previous photos">&#8592;</button>
+
+    <div class="childhood-viewport" id="childhoodViewport">
+      <div class="childhood-track" id="childhoodTrack"></div>
+    </div>
+
+    <button class="childhood-arrow" id="childhoodNext"
+      type="button" aria-label="Next photos">&#8594;</button>
+  </div>
+
+  <p class="childhood-hint">
+    Swipe to explore our memories · Tap a photo to enlarge
+  </p>
+
+  <dialog id="childhoodLightbox" class="childhood-lightbox">
+    <button id="childhoodLightboxClose" type="button"
+      class="childhood-lightbox-close"
+      aria-label="Close photo">&times;</button>
+    <img id="childhoodLightboxImage" src="" alt="">
+    <p id="childhoodLightboxCaption"></p>
+  </dialog>
+</section>
+
+    
+    
+    
+    
+    
 
     <section class="film-section section-pad" id="film">
       <div class="film-copy">

@@ -204,3 +204,349 @@ h2 { font-size: clamp(34px, 4vw, 53px); margin-bottom: 24px; }
   .site-footer { flex-wrap: wrap; justify-content: center; text-align: center; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+
+/* =====================================
+   A LIFE IN FRAMES: CHILDHOOD GALLERY
+   ===================================== */
+.childhood-section {
+  padding: 85px 0 65px;
+  overflow: hidden;
+  color: #f8f1e7;
+  background: linear-gradient(180deg, #11100f, #191511);
+}
+.childhood-heading {
+  max-width: 760px;
+  margin: 0 auto 38px;
+  padding: 0 22px;
+  text-align: center;
+}
+.childhood-eyebrow {
+  color: #c6a56c;
+  font-size: 11px;
+  letter-spacing: 4px;
+  margin-bottom: 15px;
+}
+.childhood-heading h2 {
+  font-family: Georgia, serif;
+  font-size: clamp(30px, 5vw, 52px);
+  font-weight: 400;
+  line-height: 1.15;
+  margin: 0 0 18px;
+}
+.childhood-description {
+  color: #c9c0b4;
+  font-size: 15px;
+  line-height: 1.8;
+  max-width: 580px;
+  margin: 0 auto;
+}
+.childhood-gallery {
+  position: relative;
+  padding: 0 48px;
+}
+.childhood-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.childhood-viewport::-webkit-scrollbar {
+  display: none;
+}
+.childhood-viewport.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+.childhood-track {
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  width: max-content;
+  padding: 12px 4px 24px;
+}
+.childhood-card {
+  flex: 0 0 auto;
+  width: clamp(210px, 27vw, 320px);
+  margin: 0;
+  overflow: hidden;
+  background: #211c17;
+  border: 1px solid rgba(198, 165, 108, 0.24);
+  border-radius: 5px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.24);
+  transition: border-color 0.3s, transform 0.3s;
+}
+.childhood-card:hover {
+  border-color: rgba(198, 165, 108, 0.8);
+  transform: translateY(-4px);
+}
+.childhood-photo-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.childhood-card img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  background: #30271e;
+  pointer-events: none;
+}
+.childhood-card figcaption {
+  padding: 16px 17px 19px;
+}
+.childhood-card h3 {
+  margin: 0 0 6px;
+  color: #e4c99a;
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+}
+.childhood-card p {
+  margin: 0;
+  color: #bdb1a2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.childhood-arrow {
+  position: absolute;
+  top: 42%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(198, 165, 108, 0.6);
+  border-radius: 50%;
+  color: #e4c99a;
+  background: rgba(20, 17, 14, 0.94);
+  font-size: 22px;
+  cursor: pointer;
+}
+.childhood-prev { left: 5px; }
+.childhood-next { right: 5px; }
+.childhood-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.childhood-hint {
+  padding: 0 15px;
+  margin: 10px 0 0;
+  text-align: center;
+  color: #a99a87;
+  font-size: 12px;
+}
+.childhood-lightbox {
+  position: fixed;
+  inset: 0;
+  width: min(92vw, 900px);
+  max-width: none;
+  max-height: 92vh;
+  padding: 48px 18px 20px;
+  border: 1px solid #6e5938;
+  border-radius: 8px;
+  color: #f8f1e7;
+  background: #15120f;
+}
+.childhood-lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.88);
+}
+.childhood-lightbox img {
+  display: block;
+  max-width: 100%;
+  max-height: 72vh;
+  margin: 0 auto;
+  object-fit: contain;
+}
+.childhood-lightbox p {
+  text-align: center;
+  color: #e4c99a;
+  font-family: Georgia, serif;
+}
+.childhood-lightbox-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: 0;
+  color: #f8f1e7;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .childhood-section { padding: 60px 0 45px; }
+  .childhood-heading { margin-bottom: 25px; }
+  .childhood-gallery { padding: 0 16px; }
+  .childhood-track { gap: 13px; }
+  .childhood-card {
+    width: 76vw;
+    max-width: 290px;
+  }
+  .childhood-card img { height: 280px; }
+  .childhood-arrow {
+    top: 36%;
+    width: 36px;
+    height: 36px;
+  }
+  .childhood-prev { left: 4px; }
+  .childhood-next { right: 4px; }
+}
+
+
+
+/* CHILDHOOD MEMORY GALLERY */
+.childhood-gallery {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+  min-width: 0;
+}
+
+.childhood-viewport {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+}
+
+.childhood-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.childhood-track {
+  display: flex;
+  gap: 18px;
+  width: max-content;
+  padding: 6px 2px 20px;
+}
+
+.childhood-card {
+  width: clamp(220px, 34vw, 360px);
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.childhood-photo-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.childhood-card img {
+  display: block;
+  width: 100%;
+  height: 340px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #24211d;
+}
+
+.childhood-card figcaption {
+  padding-top: 12px;
+}
+
+.childhood-card figcaption span {
+  display: block;
+  margin-bottom: 6px;
+  color: #c5a46d;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+.childhood-card figcaption b {
+  font-weight: 400;
+}
+
+.childhood-arrow {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(197, 164, 109, 0.5);
+  border-radius: 50%;
+  background: transparent;
+  color: #c5a46d;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.childhood-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.childhood-lightbox {
+  position: fixed;
+  inset: 0;
+  width: min(92vw, 1000px);
+  max-width: 92vw;
+  max-height: 90vh;
+  padding: 45px 16px 16px;
+  border: 1px solid rgba(197, 164, 109, 0.5);
+  background: #171612;
+  color: #f5eee2;
+}
+
+.childhood-lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.childhood-lightbox img {
+  display: block;
+  max-width: 100%;
+  max-height: 72vh;
+  margin: auto;
+  object-fit: contain;
+}
+
+.childhood-lightbox p {
+  text-align: center;
+  font-size: 13px;
+}
+
+.childhood-lightbox-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .childhood-gallery {
+    gap: 6px;
+  }
+
+  .childhood-arrow {
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .childhood-card {
+    width: 76vw;
+  }
+
+  .childhood-card img {
+    height: 300px;
+  }
+}

@@ -1,8 +1,205 @@
 
-/*
-  A Life in Frames — Birthday Guestbook
-  Automatic publishing, public wishes, pagination and realtime updates.
-*/
+
+/* =====================================
+   A LIFE IN FRAMES: CHILDHOOD GALLERY
+   Original filenames; guestbook untouched
+   ===================================== */
+
+(() => {
+  // Add every real filename here, in chronological order.
+  // Paths are relative to index.html.
+  const childhoodPhotos = [
+    "IMG_20191020_145025_0.jpg",
+    "IMG_20191020_154223_1.jpg",
+    "IMG_20191020_155048_2.jpg",
+    "IMG_20191020_145129_8.jpg",
+    "IMG-20250106-WA0059.jpg",
+    "IMG_20191020_144902_7.jpg",
+    "IMG_20220506_140900_325.jpg",
+    "IMG-20250106-WA0064.jpg",
+    "MG-20250106-WA0260.jpg",
+    "MG-20250106-WA0309.jpg",
+    "IMG-20250106-WA0337.jpg",
+    "IMG-20250106-WA0381.jpg",
+    "IMG-20250106-WA0388.jpg",
+    "IMG_20191020_151630_0.jpg",
+    "",
+    "",
+    "IMG_20200315_115918_4.jpg"
+  ];
+
+  const folder = "images/childhood/";
+  const viewport = document.getElementById("childhoodViewport");
+  const track = document.getElementById("childhoodTrack");
+  const previous = document.getElementById("childhoodPrev");
+  const next = document.getElementById("childhoodNext");
+  const lightbox = document.getElementById("childhoodLightbox");
+  const lightboxImage = document.getElementById("childhoodLightboxImage");
+  const lightboxCaption = document.getElementById("childhoodLightboxCaption");
+  const closeLightbox = document.getElementById("childhoodLightboxClose");
+
+  if (!viewport || !track || !previous || !next ||
+      !lightbox || !lightboxImage || !lightboxCaption ||
+      !closeLightbox) {
+    console.warn("Childhood gallery HTML elements are missing.");
+    return;
+  }
+
+  let dragging = false;
+  let dragMoved = false;
+  let startX = 0;
+  let startScroll = 0;
+  let paused = false;
+  let lastTime = 0;
+
+  childhoodPhotos.forEach((filename, index) => {
+    const figure = document.createElement("figure");
+    figure.className = "childhood-card";
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "childhood-photo-button";
+    button.setAttribute("aria-label", `Enlarge childhood photo ${index + 1}`);
+
+    const image = document.createElement("img");
+    image.src = folder + filename;
+    image.alt = `Childhood memory ${index + 1}`;
+    image.loading = index < 3 ? "eager" : "lazy";
+    image.decoding = "async";
+    image.draggable = false;
+
+    image.addEventListener("error", () => {
+      console.error("Could not load childhood photo:", image.src);
+      figure.hidden = true;
+      updateArrows();
+    });
+
+    const caption = document.createElement("figcaption");
+    const label = document.createElement("span");
+    const title = document.createElement("b");
+
+    label.textContent = `MEMORY ${String(index + 1).padStart(2, "0")}`;
+    title.textContent = "A moment in our story";
+
+    caption.append(label, title);
+    button.appendChild(image);
+    figure.append(button, caption);
+    track.appendChild(figure);
+
+    button.addEventListener("click", () => {
+      if (dragMoved) {
+        dragMoved = false;
+        return;
+      }
+
+      lightboxImage.src = image.src;
+      lightboxImage.alt = image.alt;
+      lightboxCaption.textContent = title.textContent;
+
+      if (typeof lightbox.showModal === "function") {
+        lightbox.showModal();
+      }
+    });
+  });
+
+  closeLightbox.addEventListener("click", () => lightbox.close());
+
+  lightbox.addEventListener("click", event => {
+    if (event.target === lightbox) lightbox.close();
+  });
+
+  function getStep() {
+    const card = track.querySelector(".childhood-card:not([hidden])");
+    return card ? card.getBoundingClientRect().width + 18 : 240;
+  }
+
+  function updateArrows() {
+    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    previous.disabled = viewport.scrollLeft <= 2;
+    next.disabled = viewport.scrollLeft >= maxScroll - 2;
+  }
+
+  previous.addEventListener("click", () => {
+    viewport.scrollBy({ left: -getStep(), behavior: "smooth" });
+  });
+
+  next.addEventListener("click", () => {
+    viewport.scrollBy({ left: getStep(), behavior: "smooth" });
+  });
+
+  viewport.addEventListener("scroll", updateArrows, { passive: true });
+  window.addEventListener("resize", updateArrows);
+
+  // Mouse drag support; mobile finger swiping uses native scrolling.
+  viewport.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+
+    dragging = true;
+    dragMoved = false;
+    startX = event.clientX;
+    startScroll = viewport.scrollLeft;
+    viewport.classList.add("is-dragging");
+    viewport.setPointerCapture(event.pointerId);
+  });
+
+  viewport.addEventListener("pointermove", event => {
+    if (!dragging) return;
+
+    const distance = event.clientX - startX;
+    if (Math.abs(distance) > 5) dragMoved = true;
+    if (dragMoved) viewport.scrollLeft = startScroll - distance;
+  });
+
+  function stopDragging() {
+    dragging = false;
+    viewport.classList.remove("is-dragging");
+  }
+
+  viewport.addEventListener("pointerup", stopDragging);
+  viewport.addEventListener("pointercancel", stopDragging);
+  viewport.addEventListener("lostpointercapture", stopDragging);
+
+  // Slow automatic scrolling; pauses while visitors interact.
+  function animate(time) {
+    requestAnimationFrame(animate);
+
+    if (!lastTime) lastTime = time;
+    const elapsed = Math.min(time - lastTime, 40);
+    lastTime = time;
+
+    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (paused || dragging || lightbox.open || reducedMotion ||
+        maxScroll <= 0) return;
+
+    if (viewport.scrollLeft >= maxScroll - 1) {
+      viewport.scrollLeft = 0;
+    } else {
+      viewport.scrollLeft += elapsed * 0.025;
+    }
+  }
+
+  viewport.addEventListener("mouseenter", () => paused = true);
+  viewport.addEventListener("mouseleave", () => paused = false);
+  viewport.addEventListener("focusin", () => paused = true);
+  viewport.addEventListener("focusout", () => paused = false);
+  viewport.addEventListener("touchstart", () => paused = true, { passive: true });
+  viewport.addEventListener("touchend", () => paused = false, { passive: true });
+  viewport.addEventListener("touchcancel", () => paused = false, { passive: true });
+
+  document.addEventListener("visibilitychange", () => {
+    lastTime = 0;
+  });
+
+  updateArrows();
+  requestAnimationFrame(animate);
+})();
+
+
+
 
 const SUPABASE_URL =
   "https://mgosavprtrwwcbgaenul.supabase.co";
@@ -565,3 +762,198 @@ async function initialiseWishWall() {
 }
 
 initialiseWishWall();
+
+
+
+/* =====================================
+   A LIFE IN FRAMES: CHILDHOOD GALLERY
+   Independent from the birthday guestbook
+   ===================================== */
+(() => {
+  const PHOTO_COUNT = 45;
+
+  const viewport = document.getElementById("childhoodViewport");
+  const track = document.getElementById("childhoodTrack");
+  const previous = document.getElementById("childhoodPrev");
+  const next = document.getElementById("childhoodNext");
+  const lightbox = document.getElementById("childhoodLightbox");
+  const lightboxImage = document.getElementById("childhoodLightboxImage");
+  const lightboxCaption = document.getElementById("childhoodLightboxCaption");
+  const closeLightbox = document.getElementById("childhoodLightboxClose");
+
+  if (!viewport || !track || !previous || !next ||
+      !lightbox || !lightboxImage || !lightboxCaption ||
+      !closeLightbox) return;
+
+  const memories = Array.from({ length: PHOTO_COUNT }, (_, index) => {
+    const number = index + 1;
+    return {
+      src: `images/childhood/childhood-${String(number).padStart(3, "0")}.jpg`,
+      title: `Memory ${number}`,
+      caption: "A precious moment in our story"
+    };
+  });
+
+  memories.forEach((memory, index) => {
+    const card = document.createElement("figure");
+    card.className = "childhood-card";
+
+    const photoButton = document.createElement("button");
+    photoButton.type = "button";
+    photoButton.className = "childhood-photo-button";
+    photoButton.setAttribute("aria-label", `Enlarge ${memory.title}`);
+
+    const image = document.createElement("img");
+    image.src = memory.src;
+    image.alt = memory.title;
+    image.loading = index < 3 ? "eager" : "lazy";
+    image.decoding = "async";
+    image.draggable = false;
+
+    image.addEventListener("error", () => {
+      card.hidden = true;
+      updateArrows();
+    });
+
+    const caption = document.createElement("figcaption");
+    const heading = document.createElement("h3");
+    const description = document.createElement("p");
+
+    heading.textContent = memory.title;
+    description.textContent = memory.caption;
+
+    photoButton.appendChild(image);
+    caption.append(heading, description);
+    card.append(photoButton, caption);
+    track.appendChild(card);
+
+    photoButton.addEventListener("click", () => {
+      if (dragMoved) {
+        dragMoved = false;
+        return;
+      }
+
+      lightboxImage.src = memory.src;
+      lightboxImage.alt = memory.title;
+      lightboxCaption.textContent =
+        `${memory.title} — ${memory.caption}`;
+
+      if (typeof lightbox.showModal === "function") {
+        lightbox.showModal();
+      }
+    });
+  });
+
+  closeLightbox.addEventListener("click", () => lightbox.close());
+
+  lightbox.addEventListener("click", event => {
+    if (event.target === lightbox) lightbox.close();
+  });
+
+  function cardStep() {
+    const card = track.querySelector(".childhood-card:not([hidden])");
+    return card ? card.getBoundingClientRect().width + 18 : 240;
+  }
+
+  function updateArrows() {
+    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    previous.disabled = viewport.scrollLeft <= 2;
+    next.disabled = viewport.scrollLeft >= maxScroll - 2;
+  }
+
+  previous.addEventListener("click", () => {
+    viewport.scrollBy({ left: -cardStep(), behavior: "smooth" });
+  });
+
+  next.addEventListener("click", () => {
+    viewport.scrollBy({ left: cardStep(), behavior: "smooth" });
+  });
+
+  viewport.addEventListener("scroll", updateArrows, { passive: true });
+  window.addEventListener("resize", updateArrows);
+
+  // Mouse dragging for desktop; touch swiping remains native.
+  let dragging = false;
+  let dragMoved = false;
+  let startX = 0;
+  let startScroll = 0;
+
+  viewport.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+
+    dragging = true;
+    dragMoved = false;
+    startX = event.clientX;
+    startScroll = viewport.scrollLeft;
+    viewport.classList.add("is-dragging");
+    viewport.setPointerCapture(event.pointerId);
+  });
+
+  viewport.addEventListener("pointermove", event => {
+    if (!dragging) return;
+
+    const distance = event.clientX - startX;
+
+    if (Math.abs(distance) > 5) dragMoved = true;
+    if (dragMoved) viewport.scrollLeft = startScroll - distance;
+  });
+
+  function stopDragging() {
+    dragging = false;
+    viewport.classList.remove("is-dragging");
+  }
+
+  viewport.addEventListener("pointerup", stopDragging);
+  viewport.addEventListener("pointercancel", stopDragging);
+  viewport.addEventListener("lostpointercapture", stopDragging);
+
+  // Pause auto-scroll when visitors interact with the gallery.
+  let paused = false;
+  let lastTime = 0;
+
+  function animate(time) {
+    requestAnimationFrame(animate);
+
+    if (!lastTime) lastTime = time;
+    const elapsed = Math.min(time - lastTime, 40);
+    lastTime = time;
+
+    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (paused || dragging || lightbox.open || reducedMotion ||
+        maxScroll <= 0) return;
+
+    if (viewport.scrollLeft >= maxScroll - 1) {
+      viewport.scrollLeft = 0;
+    } else {
+      viewport.scrollLeft += elapsed * 0.025;
+    }
+  }
+
+  viewport.addEventListener("mouseenter", () => paused = true);
+  viewport.addEventListener("mouseleave", () => paused = false);
+  viewport.addEventListener("focusin", () => paused = true);
+  viewport.addEventListener("focusout", () => paused = false);
+  viewport.addEventListener("touchstart", () => paused = true, { passive: true });
+  viewport.addEventListener("touchend", () => paused = false, { passive: true });
+  viewport.addEventListener("touchcancel", () => paused = false, { passive: true });
+
+  document.addEventListener("visibilitychange", () => {
+    lastTime = 0;
+  });
+
+  updateArrows();
+  requestAnimationFrame(animate);
+})();
+
+
+
+/* CHILDHOOD PHOTO GALLERY */
+const childhoodPhotos = [
+  "IMG_20191020_155048_2.jpg",
+  "IMG_20191020_154223_1.jpg",
+  "IMG_20200315_115918_4.jpg",
+];
