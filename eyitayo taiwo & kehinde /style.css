@@ -550,3 +550,48 @@ h2 { font-size: clamp(34px, 4vw, 53px); margin-bottom: 24px; }
     height: 300px;
   }
 }
+
+
+
+/* Birthday documentary video player */
+
+.film-play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid #d4af72;
+  border-radius: 50%;
+  width: 76px;
+  height: 76px;
+  margin: 24px auto;
+  background: #d4af72;
+  color: #11100f;
+  font-size: 25px;
+  transition: transform 0.2s ease;
+}
+
+.film-play:hover {
+  transform: scale(1.08);
+}
+
+.birthday-video-wrap {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.birthday-video-wrap[hidden] {
+  display: none;
+}
+
+.birthday-video-wrap video {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  background: #000;
+  border-radius: 10px;
+}
+
+.film-help {
+  line-height: 1.7;
+}

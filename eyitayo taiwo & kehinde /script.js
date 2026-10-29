@@ -949,3 +949,39 @@ async function initialiseWishWall() {
 }
 
 initialiseWishWall();
+
+
+
+
+/* Birthday documentary playback */
+
+(() => {
+  const playButton = document.getElementById("playBirthdayFilm");
+  const videoWrap = document.getElementById("birthdayVideoWrap");
+  const video = document.getElementById("birthdayFilmVideo");
+
+  if (!playButton || !videoWrap || !video) return;
+
+  playButton.addEventListener("click", async () => {
+    videoWrap.hidden = false;
+    playButton.hidden = true;
+
+    try {
+      await video.play();
+    } catch (error) {
+      // If playback is blocked, the visitor can tap
+      // the play control on the video itself.
+      playButton.hidden = false;
+      videoWrap.hidden = false;
+    }
+
+    videoWrap.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  });
+
+  video.addEventListener("ended", () => {
+    playButton.hidden = false;
+  });
+})();

@@ -141,15 +141,43 @@
         <p>A short film about where I started, the people who shaped me, the lessons that changed me, and the dreams that still call me forward.</p>
         <div class="film-chapters"><div><span>01</span> The beginning</div><div><span>02</span> Family & twinhood</div><div><span>03</span> Becoming</div><div><span>04</span> The next chapter</div></div>
       </div>
-      <div class="film-player">
-        <div class="film-poster">
-          <div class="film-play">▶</div>
-          <span class="film-tag">THE BIRTHDAY DOCUMENTARY</span>
-          <p>Your story.<br><em>In your own words.</em></p>
-          <small></small>
-        </div>
-        <p class="film-help">When your film is ready, replace this poster with an embedded YouTube or Vimeo video.</p>
-      </div>
+     
+     
+<div class="film-player">
+  <div class="film-poster">
+    <span class="film-tag">THE BIRTHDAY DOCUMENTARY</span>
+    <p>Your story.<br><em>In your own words.</em></p>
+
+    <button
+      type="button"
+      class="film-play"
+      id="playBirthdayFilm"
+      aria-label="Play birthday documentary"
+    >▶</button>
+  </div>
+
+  <div class="birthday-video-wrap" id="birthdayVideoWrap" hidden>
+    <video
+      id="birthdayFilmVideo"
+      controls
+      playsinline
+      preload="metadata"
+    >
+      <source
+        src="video/VID-20261029-WA0008.mp4"
+        type="video/mp4"
+      >
+      Your browser does not support video playback.
+    </video>
+  </div>
+
+  <p class="film-help">
+    Press play to watch our story unfold.
+  </p>
+</div>
+
+     
+     
     </section>
 
     <section class="guestbook-section section-pad" id="guestbook">
