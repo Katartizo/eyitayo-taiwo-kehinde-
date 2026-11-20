@@ -953,38 +953,57 @@ initialiseWishWall();
 
 
 
-/* Birthday documentary playback */
+
+/* =====================================
+   CINEMATIC DOCUMENTARY PLAYER
+===================================== */
 
 (() => {
+
   const playButton = document.getElementById("playBirthdayFilm");
-  const videoWrap = document.getElementById("birthdayVideoWrap");
+  const modal = document.getElementById("birthdayFilmModal");
+  const closeButton = document.getElementById("closeBirthdayFilm");
   const video = document.getElementById("birthdayFilmVideo");
 
-  if (!playButton || !videoWrap || !video) return;
+  if (!playButton || !modal || !closeButton || !video) return;
 
-  playButton.addEventListener("click", async () => {
-    videoWrap.hidden = false;
-    playButton.hidden = true;
+  function openFilm() {
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
 
-    try {
-      await video.play();
-    } catch (error) {
-      // If playback is blocked, the visitor can tap
-      // the play control on the video itself.
-      playButton.hidden = false;
-      videoWrap.hidden = false;
-    }
+    video.currentTime = 0;
 
-    videoWrap.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
+    video.play().catch(() => {
+      // If autoplay is blocked, the visitor can press play.
     });
+  }
+
+  function closeFilm() {
+    video.pause();
+    video.currentTime = 0;
+
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  playButton.addEventListener("click", openFilm);
+
+  closeButton.addEventListener("click", closeFilm);
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeFilm();
+    }
   });
 
-  video.addEventListener("ended", () => {
-    playButton.hidden = false;
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !modal.hidden) {
+      closeFilm();
+    }
   });
+
 })();
+
 
 
 
