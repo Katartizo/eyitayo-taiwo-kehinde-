@@ -349,10 +349,12 @@
         <div class="film-chapters"><div><span>01</span> The beginning</div><div><span>02</span> Family & twinhood</div><div><span>03</span> Becoming</div><div><span>04</span> The next chapter</div></div>
       </div>
      
-     
+
 <div class="film-player">
+
   <div class="film-poster">
     <span class="film-tag">THE BIRTHDAY DOCUMENTARY</span>
+
     <p>Our story.<br><em>Click here.</em></p>
 
     <button
@@ -363,25 +365,44 @@
     >▶</button>
   </div>
 
-  <div class="birthday-video-wrap" id="birthdayVideoWrap" hidden>
-    <video
-      id="birthdayFilmVideo"
-      controls
-      playsinline
-      preload="metadata"
-    >
-      <source
-        src="video/VID-20261029-WA0008.mp4"
-        type="video/mp4"
+  <p class="film-help">
+    Press play to experience our story.
+  </p>
+
+  <!-- CINEMATIC VIDEO MODAL -->
+  <div class="film-modal" id="birthdayFilmModal" hidden>
+
+    <div class="film-modal-content">
+
+      <button
+        type="button"
+        class="film-close"
+        id="closeBirthdayFilm"
+        aria-label="Close documentary"
+      >&times;</button>
+
+      <p class="film-modal-title">
+        A LIFE IN FRAMES · TAIWO & KEHINDE
+      </p>
+
+      <video
+        id="birthdayFilmVideo"
+        controls
+        playsinline
+        preload="metadata"
       >
-      Your browser does not support video playback.
-    </video>
+        <source
+          src="video/VID-20261029-WA0008.mp4"
+          type="video/mp4"
+        >
+        Your browser does not support video playback.
+      </video>
+
+    </div>
   </div>
 
-  <p class="film-help">
-    Press play to watch our story unfold.
-  </p>
 </div>
+
 
      
      
