@@ -595,3 +595,652 @@ h2 { font-size: clamp(34px, 4vw, 53px); margin-bottom: 24px; }
 .film-help {
   line-height: 1.7;
 }
+
+
+
+/* =========================================
+   TWIN CHAPTER — CINEMATIC STORY TIMELINE
+   ========================================= */
+
+.story-section {
+  position: relative;
+  padding: 110px 7%;
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(214, 179, 106, 0.08),
+      transparent 45%
+    ),
+    var(--bg);
+  overflow: hidden;
+}
+
+.story-section .section-heading {
+  max-width: 760px;
+  margin: 0 auto 75px;
+  text-align: center;
+}
+
+.story-section .eyebrow {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.story-section .section-heading h2 {
+  margin: 0 0 18px;
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: clamp(36px, 5vw, 62px);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.story-section .section-heading h2 em {
+  color: var(--gold-light);
+  font-weight: 400;
+}
+
+.story-section .section-heading p {
+  max-width: 590px;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+/* Timeline container */
+
+.timeline {
+  position: relative;
+  max-width: 1050px;
+  margin: 0 auto;
+}
+
+/* Central gold line */
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--gold),
+    rgba(214, 179, 106, 0.35),
+    var(--gold),
+    transparent
+  );
+  transform: translateX(-50%);
+}
+
+/* Timeline item */
+
+.timeline-item {
+  position: relative;
+  width: 50%;
+  padding: 0 55px 55px 0;
+}
+
+.timeline-item:nth-child(even) {
+  margin-left: 50%;
+  padding: 0 0 55px 55px;
+}
+
+/* Timeline trigger */
+
+.timeline-trigger {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 22px;
+  gap: 12px;
+  width: 100%;
+  padding: 27px;
+  border: 1px solid rgba(214, 179, 106, 0.2);
+  border-radius: 5px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.045),
+    rgba(255, 255, 255, 0.012)
+  );
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.timeline-trigger:hover,
+.timeline-trigger[aria-expanded="true"] {
+  border-color: rgba(214, 179, 106, 0.75);
+  background: rgba(214, 179, 106, 0.07);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+}
+
+.timeline-trigger:hover {
+  transform: translateY(-3px);
+}
+
+.timeline-year {
+  grid-column: 1 / -1;
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.timeline-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.timeline-kicker {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.timeline-heading strong {
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: clamp(19px, 2.3vw, 27px);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.timeline-summary {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.timeline-icon {
+  align-self: center;
+  justify-self: end;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid rgba(214, 179, 106, 0.45);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: 19px;
+  transition: transform 0.3s ease;
+}
+
+.timeline-trigger[aria-expanded="true"] .timeline-icon {
+  transform: rotate(45deg);
+}
+
+/* Gold dot on the timeline */
+
+.timeline-dot {
+  position: absolute;
+  top: 35px;
+  right: -62px;
+  z-index: 2;
+  width: 13px;
+  height: 13px;
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.timeline-item:nth-child(even) .timeline-dot {
+  right: auto;
+  left: -62px;
+}
+
+/* Expandable story content */
+
+.timeline-content {
+  margin-top: 12px;
+  padding: 25px 27px;
+  border-left: 2px solid var(--gold);
+  background: rgba(255, 255, 255, 0.025);
+  animation: timelineReveal 0.4s ease both;
+}
+
+.timeline-content[hidden] {
+  display: none;
+}
+
+.timeline-content p {
+  margin: 0 0 15px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.95;
+}
+
+.timeline-content p:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-content em {
+  color: var(--gold-light);
+}
+
+@keyframes timelineReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Keyboard accessibility */
+
+.timeline-trigger:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 4px;
+}
+
+/* =========================================
+   MOBILE TIMELINE
+   ========================================= */
+
+@media (max-width: 700px) {
+  .story-section {
+    padding: 75px 6%;
+  }
+
+  .story-section .section-heading {
+    margin-bottom: 48px;
+  }
+
+  .story-section .section-heading h2 {
+    font-size: 37px;
+  }
+
+  .story-section .section-heading p {
+    font-size: 13px;
+  }
+
+  .timeline::before {
+    left: 8px;
+  }
+
+  .timeline-item,
+  .timeline-item:nth-child(even) {
+    width: 100%;
+    margin-left: 0;
+    padding: 0 0 30px 34px;
+  }
+
+  .timeline-trigger {
+    padding: 21px 17px;
+  }
+
+  .timeline-dot,
+  .timeline-item:nth-child(even) .timeline-dot {
+    top: 29px;
+    right: auto;
+    left: 2px;
+    width: 13px;
+    height: 13px;
+  }
+
+  .timeline-heading strong {
+    font-size: 21px;
+  }
+
+  .timeline-content {
+    padding: 20px 18px;
+  }
+
+  .timeline-content p {
+    font-size: 12px;
+    line-height: 1.85;
+  }
+}
+
+/* Respect reduced-motion preferences */
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-trigger,
+  .timeline-icon,
+  .timeline-content {
+    animation: none;
+    transition: none;
+  }
+}
+
+
+
+/* =========================================
+   TIMELINE LAYOUT FIX — MOBILE & DESKTOP
+   Overrides conflicting older timeline rules
+   ========================================= */
+
+.timeline-item,
+.timeline-item:nth-child(even) {
+  display: block !important;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.timeline-trigger {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 30px !important;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.timeline-year {
+  grid-column: 1 / -1;
+}
+
+.timeline-heading {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.timeline-content {
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 12px 0 0;
+  padding: 25px 27px;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.timeline-content[hidden] {
+  display: none !important;
+}
+
+.timeline-content p {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+/* Mobile layout */
+@media (max-width: 700px) {
+  .timeline-item,
+  .timeline-item:nth-child(even) {
+    display: block !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding: 0 0 30px 34px !important;
+  }
+
+  .timeline-trigger {
+    width: 100% !important;
+    grid-template-columns: minmax(0, 1fr) 30px !important;
+  }
+
+  .timeline-content {
+    width: 100% !important;
+    padding: 20px 18px !important;
+    margin-top: 12px;
+  }
+}
+
+
+
+/* =====================================
+   A LIFE IN FRAMES
+   SPECIAL BIRTHDAY CELEBRATION
+===================================== */
+
+.birthday-celebration {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 100px 20px;
+  margin: 70px auto;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(174, 128, 48, 0.16), transparent 55%),
+    linear-gradient(135deg, #100e0b, #1c1710, #0c0b09);
+  color: #fff;
+  text-align: center;
+  border-top: 1px solid rgba(212, 175, 55, 0.4);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+.birthday-content {
+  position: relative;
+  z-index: 2;
+  max-width: 850px;
+  margin: auto;
+}
+
+.birthday-eyebrow {
+  color: #d7b56d;
+  font-size: 12px;
+  letter-spacing: 5px;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+.birthday-heading {
+  font-family: Georgia, serif;
+  font-size: clamp(38px, 7vw, 76px);
+  line-height: 1.15;
+  margin: 0;
+  color: #fff4dc;
+}
+
+.birthday-heading span {
+  color: #d6ae58;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.birthday-subtitle {
+  font-family: Georgia, serif;
+  font-size: clamp(19px, 3vw, 27px);
+  font-style: italic;
+  color: #e5cf9e;
+  margin: 25px 0;
+}
+
+.birthday-message {
+  max-width: 620px;
+  margin: 0 auto 40px;
+  color: #c9c0af;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.birthday-countdown {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin: 40px 0;
+}
+
+.countdown-item {
+  width: 105px;
+  padding: 22px 10px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(214, 174, 88, 0.35);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.countdown-item span {
+  display: block;
+  color: #e5bd68;
+  font-size: 35px;
+  font-weight: 600;
+  font-family: Georgia, serif;
+}
+
+.countdown-item small {
+  display: block;
+  margin-top: 8px;
+  color: #c9c0af;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.birthday-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 35px;
+}
+
+.birthday-btn,
+.birthday-preview-btn {
+  padding: 15px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.birthday-btn {
+  background: linear-gradient(135deg, #e5c477, #b58a3a);
+  color: #17110a;
+  border: none;
+}
+
+.birthday-preview-btn {
+  background: transparent;
+  border: 1px solid #c49a4b;
+  color: #e5c477;
+}
+
+.birthday-btn:hover,
+.birthday-preview-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
+}
+
+.birthday-footer {
+  margin-top: 65px;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #a99570;
+}
+
+/* GOLDEN PARTICLES */
+
+.golden-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.golden-particle {
+  position: absolute;
+  top: -15px;
+  width: 5px;
+  height: 5px;
+  background: #e7c46c;
+  border-radius: 50%;
+  opacity: 0.7;
+  box-shadow: 0 0 10px #d9ad4e;
+  animation: goldenFall linear infinite;
+}
+
+@keyframes goldenFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(650px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* MOBILE RESPONSIVENESS */
+
+@media (max-width: 600px) {
+  .birthday-celebration {
+    padding: 75px 15px;
+    margin: 45px auto;
+  }
+
+  .birthday-eyebrow {
+    letter-spacing: 3px;
+    font-size: 10px;
+  }
+
+  .birthday-countdown {
+    gap: 8px;
+  }
+
+  .countdown-item {
+    width: calc(50% - 8px);
+    max-width: 130px;
+    padding: 17px 8px;
+  }
+
+  .countdown-item span {
+    font-size: 29px;
+  }
+
+  .birthday-actions {
+    flex-direction: column;
+  }
+
+  .birthday-btn,
+  .birthday-preview-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .birthday-footer {
+    letter-spacing: 2px;
+    font-size: 9px;
+  }
+}
+
+
+
+.birthday-live-message {
+  color: #e5c477;
+  font-family: Georgia, serif;
+  font-size: clamp(20px, 4vw, 30px);
+  letter-spacing: 2px;
+  padding: 25px 10px;
+  animation: birthdayGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes birthdayGlow {
+  from {
+    text-shadow: 0 0 5px rgba(229, 196, 119, 0.2);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(229, 196, 119, 0.8);
+  }
+}

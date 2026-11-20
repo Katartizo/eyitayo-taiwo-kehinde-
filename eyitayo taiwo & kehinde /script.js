@@ -985,3 +985,204 @@ initialiseWishWall();
     playButton.hidden = false;
   });
 })();
+
+
+
+
+/* =========================================
+   A LIFE IN FRAMES — TWIN STORY TIMELINE
+   Expandable milestone interactions
+   ========================================= */
+
+(() => {
+  const timeline = document.getElementById("twinTimeline");
+
+  if (!timeline) return;
+
+  const triggers = timeline.querySelectorAll(".timeline-trigger");
+
+  triggers.forEach((trigger) => {
+    trigger.addEventListener("click", () => {
+      const contentId = trigger.getAttribute("aria-controls");
+      const content = document.getElementById(contentId);
+
+      if (!content) return;
+
+      const isCurrentlyOpen =
+        trigger.getAttribute("aria-expanded") === "true";
+
+      // Close every milestone first
+      triggers.forEach((otherTrigger) => {
+        const otherId = otherTrigger.getAttribute("aria-controls");
+        const otherContent = document.getElementById(otherId);
+
+        otherTrigger.setAttribute("aria-expanded", "false");
+
+        if (otherContent) {
+          otherContent.hidden = true;
+        }
+      });
+
+      // Open the selected milestone if it was previously closed
+      if (!isCurrentlyOpen) {
+        trigger.setAttribute("aria-expanded", "true");
+        content.hidden = false;
+      }
+    });
+  });
+})();
+
+
+
+/* =====================================
+   A LIFE IN FRAMES
+   BIRTHDAY CELEBRATION ENGINE
+===================================== */
+
+(() => {
+  const birthdayDate = new Date(2026, 10, 22, 0, 0, 0);
+
+  const countdown = document.getElementById("birthdayCountdown");
+  const message = document.getElementById("birthdayMessage");
+  const heading = document.querySelector(".birthday-heading");
+
+  const days = document.getElementById("birthdayDays");
+  const hours = document.getElementById("birthdayHours");
+  const minutes = document.getElementById("birthdayMinutes");
+  const seconds = document.getElementById("birthdaySeconds");
+
+  const previewButton = document.getElementById("previewBirthday");
+  const memoryButton = document.getElementById("memoryButton");
+  const particlesContainer = document.getElementById("goldenParticles");
+
+  if (!countdown || !message || !heading) return;
+
+  let previewMode = false;
+  let countdownInterval;
+
+  function showBirthday() {
+    heading.innerHTML = 'Happy Birthday,<br><span>Taiwo & Kehinde!</span>';
+
+    message.textContent =
+      "Today, we celebrate two beautiful lives, a journey filled with memories, God's faithfulness, and endless possibilities. May your new chapter be filled with greater joy, purpose, love and blessings!";
+
+    countdown.innerHTML =
+      '<div class="birthday-live-message">IT IS OUR SPECIAL DAY! ✨</div>';
+  }
+
+  function updateCountdown() {
+    if (previewMode) return;
+
+    const now = new Date();
+    const difference = birthdayDate.getTime() - now.getTime();
+
+    if (difference <= 0) {
+      showBirthday();
+      clearInterval(countdownInterval);
+      return;
+    }
+
+    const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
+    const m = Math.floor((difference / (1000 * 60)) % 60);
+    const s = Math.floor((difference / 1000) % 60);
+
+    document.getElementById("birthdayDays").textContent =
+  String(d).padStart(2, "0");
+
+document.getElementById("birthdayHours").textContent =
+  String(h).padStart(2, "0");
+
+document.getElementById("birthdayMinutes").textContent =
+  String(m).padStart(2, "0");
+
+document.getElementById("birthdaySeconds").textContent =
+  String(s).padStart(2, "0");
+  }
+
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+
+  // BIRTHDAY PREVIEW MODE
+
+  if (previewButton) {
+    previewButton.addEventListener("click", () => {
+      previewMode = !previewMode;
+
+      if (previewMode) {
+        showBirthday();
+        previewButton.textContent = "Exit Birthday Preview";
+
+        message.textContent =
+          "Welcome to our birthday celebration! This is a special preview of November 22, celebrating Taiwo and Kehinde. Two lives, one beautiful story!";
+      } else {
+        heading.innerHTML =
+          'Happy Birthday,<br><span>Taiwo & Kehinde!</span>';
+
+        message.textContent =
+          "Every year tells a story. Every memory carries a blessing. Today, we celebrate two beautiful lives, the journey so far, and the wonderful chapters still ahead.";
+
+        countdown.innerHTML = `
+          <div class="countdown-item">
+            <span id="birthdayDays">00</span><small>Days</small>
+          </div>
+          <div class="countdown-item">
+            <span id="birthdayHours">00</span><small>Hours</small>
+          </div>
+          <div class="countdown-item">
+            <span id="birthdayMinutes">00</span><small>Minutes</small>
+          </div>
+          <div class="countdown-item">
+            <span id="birthdaySeconds">00</span><small>Seconds</small>
+          </div>
+        `;
+
+        previewButton.textContent = "Preview Birthday Experience";
+
+        updateCountdown();
+      }
+    });
+  }
+
+  // REVISIT CHILDHOOD MEMORIES
+
+  if (memoryButton) {
+    memoryButton.addEventListener("click", () => {
+      const gallery =
+  document.getElementById("childhoodGallery") ||
+  document.querySelector(".childhood-gallery") ||
+  document.getElementById("gallery") ||
+  document.getElementById("memories");
+
+      if (gallery) {
+        gallery.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      } else {
+        alert("Our childhood memories will be waiting here soon!");
+      }
+    });
+  }
+
+  // GOLDEN PARTICLE ANIMATION
+
+  if (particlesContainer) {
+    for (let i = 0; i < 35; i++) {
+      const particle = document.createElement("span");
+
+      particle.className = "golden-particle";
+      particle.style.left = Math.random() * 100 + "%";
+      particle.style.animationDuration =
+        (5 + Math.random() * 8) + "s";
+      particle.style.animationDelay =
+        (Math.random() * 8) + "s";
+      particle.style.width =
+        (2 + Math.random() * 4) + "px";
+      particle.style.height = particle.style.width;
+
+      particlesContainer.appendChild(particle);
+    }
+  }
+
+})();
